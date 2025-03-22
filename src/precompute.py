@@ -13,7 +13,7 @@ datasets = ['pubmed']
 # datasets = ['cora', 'citeseer', 'pubmed']
 # datasets = ['arxiv']
 
-## precompute the density_aax on gpu for all datasets   预计算数据集所有节点的聚类距离指标，表示其标注难度用于做无标记节点选择（这里固定7簇？）
+## precompute the density_aax on gpu for all datasets
 PATH = GLOBAL_RESULT_PATH
 
 class Cluster:
