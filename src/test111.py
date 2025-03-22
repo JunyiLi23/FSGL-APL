@@ -341,7 +341,7 @@ if __name__ == '__main__':
     # run2(model_path)
 
     args = get_command_line_args_datasets()
-    params_dict = load_yaml(args.yaml_path)  # 数据集地址、openai密钥
+    params_dict = load_yaml(args.yaml_path)  # 数据集地址
     data_path = params_dict['DATA_PATH']
     # seeds = [i for i in range(args.main_seed_num)]
 
