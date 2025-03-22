@@ -19,65 +19,6 @@ from tqdm import tqdm
 # from helper.utils import delete_non_tensor_attributes
 # from ogb.nodeproppred import Evaluator
 
-# def train_pipeline_batch(seeds, args, epoch, data, writer, need_train, mode="main"):
-#     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-#     test_result_acc = []
-#     early_stop_accum = 0
-#     val_result_acc = []
-#     out_res = []
-#     best_val = 0
-#     evaluator = Evaluator(name='ogbn-products')
-#     if args.inductive:
-#         data = to_inductive(data)
-#     if mode == "main":
-#         split_num = args.num_split
-#     else:
-#         split_num = args.sweep_split
-#     split = 0
-#     data.train_mask = data.train_masks[split]
-#     data.val_mask = data.val_masks[split]
-#     data.test_mask = data.test_masks[split]
-#     data = delete_non_tensor_attributes(data)
-#     assert split_num == 1
-#     for seed in seeds:
-#         set_seed_config(seed)
-#         model = get_model(args).to(device)
-#         optimizer, scheduler = get_optimizer(args, model)
-#         loss_fn = torch.nn.CrossEntropyLoss()
-#         best_val = 0
-#         for split in range(split_num):
-#             if args.normalize:
-#                 data.x = F.normalize(data.x, dim = -1)
-#             input_nodes = torch.arange(data.x.shape[0])[data.train_mask]
-#             # import ipdb; ipdb.set_trace()
-#             data = data.to(device, 'x', 'y')
-#             subgraph_loader = NeighborLoader(data, input_nodes=input_nodes,
-#                                 num_neighbors=[15, 10, 5],
-#                     batch_size=1024, shuffle=True,
-#                     num_workers=4)
-#             val_loader = NeighborLoader(data, input_nodes=None, batch_size=4096, shuffle=False,
-#                                 num_neighbors=[-1], num_workers=1, persistent_workers=True)
-#             # import ipdb; ipdb.set_trace()
-#             for epoch in range(1, args.epochs + 1):
-#                 train_loss = batch_train(model, subgraph_loader, optimizer, device)
-#                 if scheduler:
-#                     scheduler.step()
-#                 val_acc = batch_test(model, data, evaluator, val_loader, device, data.val_mask)
-#                 print(f"Epoch {epoch}: Train loss: {train_loss}, Val acc: {val_acc}")
-#                 if val_acc > best_val:
-#                     best_val = val_acc
-#                     best_model = deepcopy(model)
-#                     early_stop_accum = 0
-#                 else:
-#                     if epoch >= args.early_stop_start:
-#                         early_stop_accum += 1
-#                     if early_stop_accum > args.early_stopping and epoch >= args.early_stop_start:
-#                         break
-#             test_acc = batch_test(model, data, evaluator, val_loader, device, data.test_mask)
-#             val_result_acc.append(val_acc)
-#             test_result_acc.append(test_acc)
-#     return test_result_acc, val_result_acc
-
 def train_pipeline(seeds, args, epoch, data, need_train, need_save_logits, reliability_list):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     test_result_acc = []
