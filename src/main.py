@@ -19,7 +19,6 @@ from tqdm import tqdm
 # from helper.utils import delete_non_tensor_attributes
 # from ogb.nodeproppred import Evaluator
 
-
 # def train_pipeline_batch(seeds, args, epoch, data, writer, need_train, mode="main"):
 #     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 #     test_result_acc = []
@@ -78,9 +77,6 @@ from tqdm import tqdm
 #             val_result_acc.append(val_acc)
 #             test_result_acc.append(test_acc)
 #     return test_result_acc, val_result_acc
-
-
-
 
 def train_pipeline(seeds, args, epoch, data, need_train, need_save_logits, reliability_list):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -188,10 +184,6 @@ def train_pipeline(seeds, args, epoch, data, need_train, need_save_logits, relia
         return test_result_acc, val_result_acc, out_res, debug_accs, train_accs
 
 
-
-
-
-
 def main(data_path, args = None, custom_args = None, save_best = False):
     seeds = [i for i in range(args.main_seed_num)]                                    #随机种子，随机到某次实验的训练过程
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')             #作用是将所有最开始读取数据时的tensor变量copy一份到device所指定的GPU上去，之后的运算都在GPU上进行
@@ -244,7 +236,6 @@ def main(data_path, args = None, custom_args = None, save_best = False):
             pkl_and_write(train_accs, osp.join("./debug_train", f"{args.model_name}_{args.split}_{args.dataset}_{args.data_format}_{args.pl_noise}_{args.budget}_{args.total_budget}_{args.strategy}_{args.filter_strategy}_{args.loss_type}_train_accs.pkl"))
 
 
-                
 def max_trial_callback(study, trial, max_try):
     n_complete = len([t for t in study.trials if t.state == optuna.trial.TrialState.COMPLETE or t.state == optuna.trial.TrialState.RUNNING])
     n_total_complete = len([t for t in study.trials])
@@ -267,7 +258,6 @@ def sweep(data_path, args = None):
     study.optimize(lambda trial: sweep_run(trial, args, sweep_seeds, param_f, device, data_path), catch=(RuntimeError,), n_trials=sweep_round, callbacks=[lambda study, trial: max_trial_callback(study, trial, sweep_round)], show_progress_bar=True, gc_after_trial=True)
     main(args=args, custom_args = study.best_trial.params, save_best = True)
     print(study.best_trial.params)
-
 
 
 def sweep_run(trial, args, sweep_seeds, param_f, device, data_path):
@@ -296,15 +286,6 @@ def sweep_run(trial, args, sweep_seeds, param_f, device, data_path):
     print(f"Test Accuracy: {mean_test_acc} ± {std_test_acc}")
     return mean_test_acc
 
-
-
-
-
-
-    
-
-
-    
 if __name__ == '__main__':
     current_time = int(time.time())
     # #logging.basicConfig(filename='../../logs/{}.log'.format(current_time),
@@ -317,7 +298,7 @@ if __name__ == '__main__':
 
     # args = get_command_line_args()            #获取参数
     args = get_command_line_args_datasets()
-    params_dict = load_yaml(args.yaml_path)   #数据集地址、openai密钥
+    params_dict = load_yaml(args.yaml_path)
     data_path = params_dict['DATA_PATH']
     if args.mode == "main":
         main(data_path, args = args)          #训练
@@ -328,8 +309,4 @@ if __name__ == '__main__':
 '''
 运行cora例子 ：
 python src/main.py --dataset cora --model_name GCN --data_format sbert --main_seed_num 3 --split active --output_intermediate 0 --no_val 1 --strategy pagerank2 --debug 1 --total_budget 140 --filter_strategy consistency --loss_type ce --second_filter conf+entropy --epochs 30 --debug_gt_label 0 --early_stop_start 150 --filter_all_wrong_labels 0 --oracle 1 --ratio 0.2 --alpha 0.33 --beta 0.33
-
-运行citeseer：
-python src/main.py --dataset citeseer --model_name GCN --data_format sbert --main_seed_num 3 --split active --output_intermediate 0 --no_val 1 --strategy pagerank2 --debug 1 --total_budget 140 --filter_strategy consistency --loss_type ce --second_filter conf+entropy --epochs 30 --debug_gt_label 0 --early_stop_start 150 --filter_all_wrong_labels 0 --oracle 1 --ratio 0.2 --alpha 0.33 --beta 0.33
-
 '''
