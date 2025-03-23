@@ -74,7 +74,7 @@ def QA_llm_for_pre_and_conf(model_path, data_path, args = None):
     # answer_text = QA_llama32_3b_Ins(prompt, model_path, device)
     # answer_text = QA_llama31_8b_Ins(prompt, model_path, device)
     # answer_text = QA_Qwen25_3b_Ins(prompt, model_path, device)
-    answer_text = QA_Deep_R1_Qwen25_1b(prompt, model_path, device)
+    answer_text = QA_Deep_R1_Qwen25_7b(prompt, model_path, device)
 
     print(answer_text[-1])
 def top_k_question(question, k):
@@ -282,7 +282,7 @@ def QA_Qwen25_3b_Ins(prompt, model_path, device):
     )
     # print(outputs[0]["generated_text"][-1])
     return outputs[0]["generated_text"]
-def QA_Deep_R1_Qwen25_1b(prompt, model_path, device):
+def QA_Deep_R1_Qwen25_7b(prompt, model_path, device):
     initial_allocated = torch.cuda.memory_allocated()
     initial_reserved = torch.cuda.memory_reserved()
     print(initial_allocated, ",", initial_reserved) # 记录初始已分配的 GPU 内存
@@ -326,17 +326,18 @@ def QA_Deep_R1_Qwen25_1b(prompt, model_path, device):
 
 if __name__ == '__main__':
     print("AAAAAAAAAAAAAAAAAAAAAAAA")
-    # model_path1 = 'E:/DL_python/LLM4Graph_Modules/Llama_3.2_1B'             #模型
-    model_path11 = 'E:/DL_python/LLM4Graph_Modules/Llama_3.2_1B_Instruct'
-    model_path12 = 'E:/DL_python/LLM4Graph_Modules/Llama_3.2_3B_Instruct'
-    # model_path13 = 'E:/DL_python/LLM4Graph_Modules/Llama_3.1_8B_Instruct'
-    model_path21 = 'E:/DL_python/LLM4Graph_Modules/Qwen_2.5_1.5B_Instruct'
-    model_path22 = 'E:/DL_python/LLM4Graph_Modules/Qwen_2.5_3B_Instruct'
-    model_path23 = 'E:/DL_python/LLM4Graph_Modules/DeepSeek_R1_Distill_Qwen_1.5B'
-    model_path24 = 'E:/DL_python/LLM4Graph_Modules/DeepSeek_R1_Distill_Qwen_7B'
+    # model_path1 = 'E:/LLM4Graph_Modules/Llama_3.2_1B'             #模型
+    model_path11 = 'E:/LLM4Graph_Modules/Llama_3.2_1B_Instruct'
+    model_path12 = 'E:/LLM4Graph_Modules/Llama_3.2_3B_Instruct'
+    model_path13 = 'E:/LLM4Graph_Modules/Llama_3.1_8B_Instruct'
+    model_path21 = 'E:/LLM4Graph_Modules/Qwen_2.5_1.5B_Instruct'
+    model_path22 = 'E:/LLM4Graph_Modules/Qwen_2.5_3B_Instruct'
+    model_path23 = 'E:/LLM4Graph_Modules/Qwen_2.5_7B_Instruct'
+    model_path24 = 'E:/LLM4Graph_Modules/DeepSeek_R1_Distill_Qwen_1.5B'
+    model_path25 = 'E:/LLM4Graph_Modules/DeepSeek_R1_Distill_Qwen_7B'
 
-    # tokenizer_path = 'D:/Python/pythonProject/LLMGNN-master/Llama_3.2_1B/tokenizer_config.json'    #分词器
-    output_path = 'D:/Python/pythonProject/LLMGNN-master/Llama_3.2_1B_tune/'
+    # tokenizer_path = 'D:/FSGL-APL/DeepSeek_R1_Distill_Qwen_7B/tokenizer_config.json'    #分词器
+    output_path = 'D:/FSGL-APL/DeepSeek_R1_Distill_Qwen_7B_tune/'
     # run1(model_path,output_path)
     # run2(model_path)
 
@@ -348,7 +349,7 @@ if __name__ == '__main__':
 
     QA_llm_for_pre_and_conf(model_path23, data_path, args = args)
 
-    # generate_llama32_3b(model_path2)
+    # generate_llama32_8b(model_path2)
 
     print("—————— END ——————")
 
