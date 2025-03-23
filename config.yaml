@@ -1,3 +1,4 @@
 DATA_PATH: xxx\FSGL-APL\data
+LLM_PATH: xxx\FSGL-APL\DeepSeek_R1_Distill_Qwen
 PALM_KEY: none
 LOGIT_PATH: xxx\FSGL-APL\logit
