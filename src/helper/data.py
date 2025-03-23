@@ -18,8 +18,8 @@ from .active import GLOBAL_RESULT_PATH
 # from ..llm import query
 
 ## better use absolute path
-LLM_PATH = "D:\\Python\\pythonProject\\LLMGNN-master\\src\\llm.py"
-PARTITIONS = "D:\\Python\\pythonProject\\LLMGNN-master\\data\\partitions"
+LLM_PATH = "xxx\\FSGL-APL\\src\\llm.py"
+PARTITIONS = "xxx\\FSGL-APL\\data\\partitions"
 
 
 
