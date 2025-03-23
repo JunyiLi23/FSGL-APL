@@ -1,2 +1,3 @@
-DATA_PATH: D:\Python\pythonProject\LLMGNN-master\data
-LOGIT_PATH: D:\Python\pythonProject\LLMGNN-master\logit
+DATA_PATH: xxx\FSGL-APL\data
+PALM_KEY: none
+LOGIT_PATH: xxx\FSGL-APL\logit
