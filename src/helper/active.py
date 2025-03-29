@@ -34,7 +34,7 @@ warnings.simplefilter("ignore")
 
 # import faiss
 
-GLOBAL_RESULT_PATH = "D:\\Python\\pythonProject\\LLMGNN-master\\data\\aax"
+GLOBAL_RESULT_PATH = "D:\\FSGL-APL\\data\\aax"
 
 class Cluster:
     """
