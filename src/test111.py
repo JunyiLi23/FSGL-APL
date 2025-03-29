@@ -10,8 +10,7 @@ from helper.data import get_dataset, inject_random_noise_y_level
 from helper.args import get_command_line_args, get_command_line_args_datasets
 from helper.active import train_lr, inference_lr
 from helper.utils import load_yaml
-from openail.config import configs
-from openail.config2 import configs2
+from config2 import configs2
 from tqdm import tqdm
 import time
 import matplotlib.pyplot as plt
