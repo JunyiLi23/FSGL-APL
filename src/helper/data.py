@@ -131,7 +131,6 @@ def inject_random_noise_y_level(orig_y, noise):
 
 
 
-
 def generate_pl_mask(data, no_val = 0, total_budget = 140, seed = 0):
     seed_everything(seed)                       #多种随机数生成器
     num_classes = data.y.max().item() + 1
@@ -146,6 +145,24 @@ def generate_pl_mask(data, no_val = 0, total_budget = 140, seed = 0):
     test_num = int(total_num * 0.2)         #取总数据集的0.2，这里命名test，其实后面再做筛选和后过滤，做为GCN的train，剩下其它节点则为test。
     t_mask, val_mask, test_mask = generate_random_mask(data.x.shape[0], train_num, val_num, test_num, seed = seed)
     return t_mask, val_mask, test_mask
+
+
+def generate_labeled_random_mask(data, num_classes, labeled_per_class, train_num, val_num, test_num = -1, seed = 0):
+    seed_everything(seed)                              #随机种子
+    total_node_number = data.x.shape[0]
+    random_index = torch.randperm(total_node_number)   #将元素随机排列
+
+    labeled_nodes, unlabeled_nodes = generate_labeled_data(data, random_index, num_classes, labeled_per_class)
+
+    train_Num = train_num - num_classes * labeled_per_class
+    train_index = unlabeled_nodes[:train_Num]
+    val_index = unlabeled_nodes[train_Num:train_Num + val_num]
+    if test_num == -1:
+        test_index = unlabeled_nodes[train_Num + val_num:]
+    else:
+        test_index = unlabeled_nodes[train_Num + val_num: train_Num + val_num + test_num]
+    # print(seed,"\nlabel:", labeled_nodes, "\nunlabel: ", test_index[:20],"\n")
+    return index_to_mask(labeled_nodes, total_node_number), index_to_mask(train_index, total_node_number), index_to_mask(val_index, total_node_number), index_to_mask(test_index, total_node_number)
 
 def generate_labeled_data(data, random_index, num_classes, labeled_per_class):
     if labeled_per_class<=0:
@@ -192,27 +209,27 @@ def generate_labeled_pl_mask(data, no_val = 0, total_budget = 140, labeled_per_c
         train_num = total_label_num * 3 // 4
         val_num = total_label_num - train_num
     test_num = int(total_num * 0.2)         #取总数据集的0.2，这里命名test，其实后面再做筛选和后过滤，做为GCN的train，剩下其它节点则为test。
-
-    total_node_number = data.x.shape[0]
-    random_index = torch.randperm(total_node_number)  # 将元素随机排列
-    # print(seed,": ",random_index)
-
-    labeled_nodes, unlabeled_nodes = generate_labeled_data(data, random_index, num_classes, labeled_per_class)
-    # print("label:", labeled_nodes, ", unlabel: ", unlabeled_nodes)
-    train_num = train_num - num_classes * labeled_per_class
-    # print("lllll",train_num,total_label_num)
-
-    train_index = unlabeled_nodes[:train_num]  # 训练集索引
-    val_index = unlabeled_nodes[train_num:train_num + val_num]  # 验证集索引
-    if test_num == -1:
-        test_index = unlabeled_nodes[train_num + val_num:]  # 测试集索引未设置则取剩余所有的
-    else:  # 测试集索引已设置则取剩余设置容量的
-        test_index = unlabeled_nodes[train_num + val_num: train_num + val_num + test_num]
-    # print("label:", labeled_nodes, ", unlabel: ", train_index, val_index, test_index)
-    # print(seed,"\nlabel:", labeled_nodes, "\nunlabel: ", test_index[:20],"\n")
-
-    lt_mask, t_mask, val_mask, test_mask = index_to_mask(labeled_nodes, total_node_number), index_to_mask(train_index, total_node_number), index_to_mask(val_index, total_node_number), index_to_mask(test_index, total_node_number)
-    # print("label:", torch.sum(l_mask == True), ", unlabel: ", torch.sum(t_mask == True), torch.sum(val_mask == True), torch.sum(test_mask == True))
+    # total_node_number = data.x.shape[0]
+    # random_index = torch.randperm(total_node_number)  # 将元素随机排列
+    # # print(seed,": ",random_index)
+    #
+    # labeled_nodes, unlabeled_nodes = generate_labeled_data(data, random_index, num_classes, labeled_per_class)
+    # # print("label:", labeled_nodes, ", unlabel: ", unlabeled_nodes)
+    # train_num = train_num - num_classes * labeled_per_class
+    # # print("lllll",train_num,total_label_num)
+    #
+    # train_index = unlabeled_nodes[:train_num]  # 训练集索引
+    # val_index = unlabeled_nodes[train_num:train_num + val_num]  # 验证集索引
+    # if test_num == -1:
+    #     test_index = unlabeled_nodes[train_num + val_num:]  # 测试集索引未设置则取剩余所有的
+    # else:  # 测试集索引已设置则取剩余设置容量的
+    #     test_index = unlabeled_nodes[train_num + val_num: train_num + val_num + test_num]
+    # # print("label:", labeled_nodes, ", unlabel: ", train_index, val_index, test_index)
+    # # print(seed,"\nlabel:", labeled_nodes, "\nunlabel: ", test_index[:20],"\n")
+    #
+    # lt_mask, t_mask, val_mask, test_mask = index_to_mask(labeled_nodes, total_node_number), index_to_mask(train_index, total_node_number), index_to_mask(val_index, total_node_number), index_to_mask(test_index, total_node_number)
+    # # print("label:", torch.sum(l_mask == True), ", unlabel: ", torch.sum(t_mask == True), torch.sum(val_mask == True), torch.sum(test_mask == True))
+    lt_mask, t_mask, val_mask, test_mask = generate_labeled_random_mask(data, num_classes, labeled_per_class, train_num, val_num, test_num)
     return lt_mask, t_mask, val_mask, test_mask
 
 
@@ -412,7 +429,7 @@ def get_dataset(seeds, dataset, split, data_format, labeled_per_class, data_path
         elif split == 'active':                                                     #所提的节点主动选择策略，即加权 聚类距离+主动选择标准（包括代表性如，多样性如pagerank），转化为排名分数做所谓第一层的过滤
             # num_classes = data.y.max().item() + 1
             # _, val_mask, test_mask = generate_pl_mask(data, no_val, real_budget)    #划分训练、验证、测试集，返回掩码表示（size同data）
-            l_mask, _, val_mask, test_mask = generate_labeled_pl_mask(data, no_val, real_budget, labeled_per_class)
+            l_mask, _, val_mask, test_mask = generate_labeled_pl_mask(data, no_val, real_budget, labeled_per_class, s)
             # import ipdb; ipdb.set_trace()
             if pseudo_labels is not None:                                           #伪标签为前面查询大模型对节点预测的类
                 pl = pseudo_labels                                                  #【二】无标记节点选择 ——————————————————————————————————————————————————————————
@@ -452,7 +469,8 @@ def get_dataset(seeds, dataset, split, data_format, labeled_per_class, data_path
             new_test_masks.append(test_mask)
         elif split == 'active_train':
             num_classes = data.y.max().item() + 1
-            _, val_mask, test_mask = generate_pl_mask(data, no_val, real_budget)
+            # _, val_mask, test_mask = generate_pl_mask(data, no_val, real_budget)
+            l_mask, _, val_mask, test_mask = generate_labeled_pl_mask(data, no_val, real_budget, labeled_per_class, s)
             pl = pseudo_labels
             train_mask = active_generate_mask(test_mask, data.x, s, data.x.device, strategy, real_budget, data, num_centers, compensation, dataset, logit_path, llm_strategy, pl, max_part, oracle_acc, reliability_list, conf, dataset)
             y_copy = -1 * torch.ones(data.y.shape[0], dtype=torch.long)
@@ -462,6 +480,7 @@ def get_dataset(seeds, dataset, split, data_format, labeled_per_class, data_path
             data.conf = conf
             non_empty = (y_copy != -1)
             assert (train_mask != non_empty).sum() == 0
+            new_labeled_masks.append(l_mask)
             new_train_masks.append(train_mask)
             new_val_masks.append(val_mask)
             new_test_masks.append(test_mask)
@@ -477,15 +496,18 @@ def get_dataset(seeds, dataset, split, data_format, labeled_per_class, data_path
             # pl = pseudo_labels
             pl = data.y
             if no_val:
-                t_mask, val_mask, te_mask = generate_random_mask(data.x.shape[0], train_num, val_num, test_num)
+                # t_mask, val_mask, te_mask = generate_random_mask(data.x.shape[0], train_num, val_num, test_num)
+                l_mask, t_mask, val_mask, te_mask = generate_labeled_random_mask(data, num_classes, labeled_per_class, train_num, val_num, test_num)
             else:
-                t_mask, val_mask, te_mask = generate_random_mask(data.x.shape[0], train_num, val_num)
+                # t_mask, val_mask, te_mask = generate_random_mask(data.x.shape[0], train_num, val_num)
+                l_mask, t_mask, val_mask, te_mask = generate_labeled_random_mask(data, num_classes, labeled_per_class, train_num, val_num)
             if strategy != 'no':
                 train_mask = active_generate_mask(te_mask, data.x, s, data.x.device, strategy, real_budget, data, num_centers, compensation, dataset, logit_path, llm_strategy, pl, max_part, oracle_acc, reliability_list, conf, dataset)
                 val_mask = torch.zeros_like(train_mask)
                 te_mask = ~train_mask
             else:
                 train_mask = t_mask
+            new_labeled_masks.append(l_mask)
             new_train_masks.append(train_mask)
             new_val_masks.append(val_mask)
             new_test_masks.append(te_mask)
