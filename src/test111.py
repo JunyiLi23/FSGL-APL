@@ -87,41 +87,47 @@ def train_pipeline(seeds, args, epoch, data, need_train, need_save_logits, relia
             data.val_mask = data.val_masks[i]
             data.test_mask = data.test_masks[i]
         if 'pl' in args.split or 'active' in args.split:
+            data.labeled_mask = data.labeled_masks[i]
             data.train_mask = data.train_masks[i]
             data.val_mask = data.val_masks[i]
             data.test_mask = data.test_masks[i]
             # twoset = data.train_mask == data.train_masks[i]  #分支上面这三句没必要吧？
             # print("if dataset:", torch.sum(twoset).item())
             data.backup_y = data.y.clone()
+            data.yss = data.ys[i]
             if not args.debug_gt_label:                    #debug_gt_label=0，用伪标签监督训练
-                data.y = data.ys[i]
+                data.yss = data.ys[i]
+                # print("Using pseudo label")
             else:
                 print("Using ground truth label")
-
             # import ipdb; ipdb.set_trace()
-        for i in tqdm(range(epoch)):                                                                        #tqdm是一个快速、可扩展的Python进度条库，用于在Python长循环中添加一个进度提示信息，用户只需封装任何迭代器 tqdm(iterator)
+        for ii in tqdm(range(epoch)):                                                                        #tqdm是一个快速、可扩展的Python进度条库，用于在Python长循环中添加一个进度提示信息，用户只需封装任何迭代器 tqdm(iterator)
             # ipdb.set_trace()
             labeled_mask = data.labeled_mask
             train_mask = data.train_mask
             val_mask = data.val_mask
+            # print("labeled: ",len(labeled_mask),torch.sum(labeled_mask).item(),"unlabeled: ", len(train_mask),torch.sum(train_mask).item())
+            # print("\ntruth: ", len(data.y), data.y)
+            lab_los_weight = args.l_l_weight - 0.001 * ii                                                              #随epoch动态降低
             if need_train:                                                                                  #训练，若训练模型是LP则不进入
                 if 'rim' in args.strategy or 'iterative' in args.strategy or args.split == 'active_train':  #节点选择策略为rim或iterative，或数据集掩码操作采用所提的节点主动选择+置信度后过滤
-                    train_loss, val_loss, val_acc, train_acc = train(model, data, optimizer, loss_fn, train_mask, val_mask, args.no_val, reliability)
+                    train_loss, val_loss, val_acc, train_acc = train(model, data, optimizer, loss_fn, lab_los_weight, labeled_mask, train_mask, val_mask, args.no_val, reliability)
                 else:
                     if args.model_name == 'S_model':
                         train_loss, val_loss, val_acc, train_acc = s_train(model, data, optimizer, loss_fn, train_mask, val_mask, args.no_val, noise_ada)
                     else:
-                        train_loss, val_loss, val_acc, train_acc = train(model, data, optimizer, loss_fn, train_mask, val_mask, args.no_val)
+                        train_loss, val_loss, val_acc, train_acc = train(model, data, optimizer, loss_fn, lab_los_weight, labeled_mask, train_mask, val_mask, args.no_val)
+                        # print("epoch:", ii, ": ", train_loss, train_acc, val_loss, val_acc)
                 if scheduler:                                                                               #采用adam，scheduler = None
                     scheduler.step()
                 if args.output_intermediate and not args.no_val:
-                    print(f"Epoch {i}: Train loss: {train_loss}, Val loss: {val_loss}, Val acc: {val_acc[0]}")
+                    print(f"Epoch {ii}: Train loss: {train_loss}, Val loss: {val_loss}, Val acc: {val_acc[0]}")
                 if args.debug:
                     if args.filter_strategy == 'none':
                         test_acc, res = test(model, data, 0, data.test_mask)
                     else:
-                        test_acc, res = test(model, data, 0, data.test_mask, data.backup_y)   #测试，返回测试集acc指标值
-                    # print(f"Epoch {i}: Test acc: {test_acc}")
+                        test_acc, res = test(model, data, 0, data.test_mask, data.backup_y)                 #测试，返回测试集acc指标值
+                    # print(f"Epoch {ii}: Test acc: {test_acc}")
                     debug_acc.append(test_acc)
                     this_train_acc.append(train_acc)
                 if not args.no_val:
@@ -130,10 +136,10 @@ def train_pipeline(seeds, args, epoch, data, need_train, need_save_logits, relia
                         best_model = deepcopy(model)
                         early_stop_accum = 0
                     else:
-                        if i >= args.early_stop_start:
+                        if ii >= args.early_stop_start:
                             early_stop_accum += 1
-                        if early_stop_accum > args.early_stopping and i >= args.early_stop_start:
-                            print(f"Early stopping at epoch {i}")
+                        if early_stop_accum > args.early_stopping and ii >= args.early_stop_start:
+                            print(f"Early stopping at epoch {ii}")
                             break
             else:
                 best_model = model
@@ -147,6 +153,10 @@ def train_pipeline(seeds, args, epoch, data, need_train, need_save_logits, relia
         out_res.append(res)                   #保存各seed的最终模型输出
         best_val = 0
         best_model = None
+        # trainmax_index, trainmax_value = max(enumerate(this_train_acc), key=lambda x: x[1])
+        # testmax_index, testmax_value = max(enumerate(debug_acc), key=lambda x: x[1])
+        # print(seed,"\ntrain:\ntra_best: ",trainmax_index, trainmax_value,"\ntra_sets: ", this_train_acc,"\nval_best: ", testmax_index, testmax_value,"\nval_set: ", debug_acc)
+        # print("test:", test_acc,"\n\n")
         if args.debug:
             debug_accs.append(debug_acc)      #保存各seed训练中所有epoch的测试集acc
             train_accs.append(this_train_acc) #保存各seed训练中所有epoch的训练集acc
@@ -291,7 +301,7 @@ def QA_llm_for_pre_and_conf(model_path, data_path, args = None):
     # answer_text = QA_llama32_3b_Ins(prompt, model_path, device)
     # answer_text = QA_llama31_8b_Ins(prompt, model_path, device)
     # answer_text = QA_Qwen25_3b_Ins(prompt, model_path, device)
-    answer_text = QA_Deep_R1_Qwen25_1b(prompt, model_path, device)
+    answer_text = QA_Deep_R1_Qwen25(prompt, model_path, device)
 
     print(answer_text[-1])
 def top_k_question(question, k):
@@ -499,7 +509,7 @@ def QA_Qwen25_3b_Ins(prompt, model_path, device):
     )
     # print(outputs[0]["generated_text"][-1])
     return outputs[0]["generated_text"]
-def QA_Deep_R1_Qwen25_1b(prompt, model_path, device):
+def QA_Deep_R1_Qwen25(prompt, model_path, device):
     initial_allocated = torch.cuda.memory_allocated()
     initial_reserved = torch.cuda.memory_reserved()
     print(initial_allocated, ",", initial_reserved) # 记录初始已分配的 GPU 内存
