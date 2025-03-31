@@ -65,16 +65,30 @@ def s_train(model, data, optimizer, loss_fn, train_mask, val_mask, no_val, noise
     return loss_train, val_loss, val_acc, train_acc
 
 
-def train(model, data, optimizer, loss_fn, train_mask, val_mask, no_val, reliability_list = None):
+def train(model, data, optimizer, loss_fn, labeled_weight, labeled_mask, train_mask, val_mask, no_val, reliability_list = None):
     optimizer.zero_grad()         #【一】将梯度归零
     preds = model(data)           #【二】调用模型预测
     if len(data.y.shape) != 1:
-        y = data.y.squeeze(1)     #移除原张量中大小为1的维度，data.y为节点伪标签
+        y = data.y.squeeze(1)     #移除原张量中大小为1的维度，data.y为真实标签
     else:
         y = data.y
+    if len(data.yss.shape) != 1:
+        ys = data.yss.squeeze(1)  #data.ys为节点伪标签
+    else:
+        ys = data.yss
     confidence = reliability_list
+    unlabeled_weight = 1.0 - labeled_weight  # 和为 1：简化调参过程，避免因总损失规模变化带来的干扰. 若无标签数据质量高（伪标签可靠），可增大unlabeled_weight（labeled_weight动态减小）
+    # print("preds: ", len(preds), preds, "\ntruth: ", len(y[train_mask]),y[train_mask])
+    # n_classes = preds.size(1)
+    # min_label = torch.min(y[labeled_mask]).item()
+    # max_label = torch.max(y[labeled_mask]).item()
+    # if min_label < 0 or max_label >= n_classes:
+    #     print(f"目标标签范围错误：最小值为 {min_label}，最大值为 {max_label}，类别数为 {n_classes}")
+
+    labeled_loss = loss_fn(preds[labeled_mask], y[labeled_mask])
     if loss_fn.reduction != 'none' or confidence == None:
-        train_loss = loss_fn(preds[train_mask], y[train_mask])
+        unlabeled_loss = loss_fn(preds[train_mask], ys[train_mask])
+        # print("l:", labeled_loss.item(), "ul:",train_loss.item())
     else:
         # Extract the values using the mask
         values_to_normalize = confidence[train_mask]   #筛选节点（即通过了主动选择和后过滤）的置信度
@@ -89,12 +103,15 @@ def train(model, data, optimizer, loss_fn, train_mask, val_mask, no_val, reliabi
             normalized_values = (values_to_normalize - min_val) / (max_val - min_val)
             # Replace original tensor values with the normalized values for nodes defined by the train mask     #归一化，向量操作
             confidence[train_mask] = normalized_values.clone()
-        train_loss = (loss_fn(preds[train_mask], y[train_mask]) * confidence[train_mask]).mean()  #训练集损失为所有筛选节点的损失（预测和伪标签的交叉熵）和置信度乘积的平均值
+        # train_loss = (loss_fn(preds[train_mask], ys[train_mask]) * confidence[train_mask]).mean()  #训练集损失为所有筛选节点的损失（预测和伪标签的交叉熵）和置信度乘积的平均值
+        unlabeled_loss = (loss_fn(preds[train_mask], ys[train_mask]) * confidence[train_mask]).mean()
+    train_loss = labeled_weight * labeled_loss + unlabeled_weight * unlabeled_loss
     train_loss.backward()         #【三】反向传播计算得到每个参数的梯度值
     optimizer.step()              #【四】通过梯度下降执行一步参数更新
-    train_acc, _ = test(model, data, False, train_mask)  #eval()，计算acc
+    # train_acc, _ = test(model, data, False, train_mask)  #eval()，计算acc
+    train_acc, _ = test(model, data, False, train_mask | labeled_mask)
     if not no_val:
-        val_loss = loss_fn(preds[val_mask], y[val_mask])
+        val_loss = loss_fn(preds[val_mask], ys[val_mask])
         val_acc, _ = test(model, data, False, val_mask)
     else:
         val_loss = 0

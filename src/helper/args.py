@@ -71,6 +71,7 @@ def get_command_line_args():
      parser.add_argument("--gamma", type=float, default = 0.1)
      parser.add_argument("--ratio", type=float, default = 0.3)                      #【】
      parser.add_argument("--label_pc", type=int, default=3)                         #【】labeled data number per class
+     parser.add_argument("--l_l_weight", type=float, default=0.5)
      args = parser.parse_args()
      return args
 
@@ -86,7 +87,7 @@ def get_command_line_args_cora():
      parser.add_argument('--main_seed_num', type=int, default=5)         #【】
      parser.add_argument('--sweep_seed_num', type=int, default=5)
      parser.add_argument('--return_embeds', type=int, default=1)
-     parser.add_argument('--lr', type=float, default=0.01)
+     parser.add_argument('--lr', type=float, default=0.01)               #【】
      parser.add_argument('--weight_decay', type=float, default=5e-4)
      parser.add_argument('--num_split', type=int, default=1)
      parser.add_argument('--sweep_split', type=int, default=1)
@@ -138,6 +139,7 @@ def get_command_line_args_cora():
      parser.add_argument("--gamma", type=float, default = 0.1)
      parser.add_argument("--ratio", type=float, default = 0.29)                     #【】
      parser.add_argument("--label_pc", type=int, default=3)                         #【】labeled data number per class
+     parser.add_argument("--l_l_weight", type=float, default=0.5)
      args = parser.parse_args()
      return args
 
@@ -145,21 +147,21 @@ def get_command_line_args_citeseer():
      parser = argparse.ArgumentParser(description='LLM Graph')
      parser.add_argument('--dataset', default='citeseer', type=str)      #【数据集】：cora、pubmed、citeseer、citeseer、arxiv
      parser.add_argument('--normalize', default=0, type=int)
-     parser.add_argument('--epochs', type=int, default=50)               #【】
+     parser.add_argument('--epochs', type=int, default=30)               #【】
      parser.add_argument('--early_stopping', type=int, default=10)
      parser.add_argument('--model_name', type=str, default='GCN')        #【被训练模型】可选：GCN、MLP、SAGE、GAT、LP、S_model、MLP2、BSAGE、AdjGCN、AdjSAGE
      parser.add_argument('--norm', type=str, default=None)
-     parser.add_argument('--main_seed_num', type=int, default=3)         #【】
+     parser.add_argument('--main_seed_num', type=int, default=5)         #【】
      parser.add_argument('--sweep_seed_num', type=int, default=5)
      parser.add_argument('--return_embeds', type=int, default=1)
-     parser.add_argument('--lr', type=float, default=0.02)
+     parser.add_argument('--lr', type=float, default=0.01)               #【】
      parser.add_argument('--weight_decay', type=float, default=5e-4)
      parser.add_argument('--num_split', type=int, default=1)
      parser.add_argument('--sweep_split', type=int, default=1)
      parser.add_argument('--output_intermediate', type=int, default=0)                      #【】
      parser.add_argument('--num_layers', type=int, default=2)
      parser.add_argument('--hidden_dimension', type=int, default=64)
-     parser.add_argument('--dropout', type=float, default=0.5)
+     parser.add_argument('--dropout', type=float, default=0.5)                              #【】
      parser.add_argument('--optim', type=str, default='adam')
      parser.add_argument('--warmup', default=10, type=int)
      parser.add_argument('--lr_gamma', default=0.998, type=float)
@@ -192,7 +194,7 @@ def get_command_line_args_citeseer():
      parser.add_argument("--max_part", type=int, default=7)
      parser.add_argument("--debug", type=int, default=1)                                    #【若不为零，则表示debug中和记录每次的结果文件】1
      parser.add_argument("--train_vs_val", type=float, default = 3)
-     parser.add_argument("--total_budget", type=int, default = 240)                         #【】
+     parser.add_argument("--total_budget", type=int, default = 120)                         #【】
      parser.add_argument("--loss_type", type=str, default = 'ce')
      parser.add_argument("--second_filter", type=str, default = 'conf+density')             #二、【后过滤策略】weight 或其它选项：conf_only、density_only、conf+density、conf+entropy、conf+density+entropy
      parser.add_argument("--debug_gt_label", type=int, default = 0)                         #【】
@@ -202,8 +204,9 @@ def get_command_line_args_citeseer():
      parser.add_argument("--alpha", type=float, default = 0.33)                             #【】
      parser.add_argument("--beta", type=float, default = 0.33)                              #【】
      parser.add_argument("--gamma", type=float, default = 0.1)
-     parser.add_argument("--ratio", type=float, default = 0.54)                             #【】
-     parser.add_argument("--label_pc", type=int, default=3)                                 #【】labeled data number per class
+     parser.add_argument("--ratio", type=float, default = 0.2)                              #【】
+     parser.add_argument("--label_pc", type=int, default=50)                                 #【】labeled data number per class
+     parser.add_argument("--l_l_weight", type=float, default=0.5)                          #【】labeled loss weight
      args = parser.parse_args()
      return args
 
@@ -270,6 +273,7 @@ def get_command_line_args_pubmed():
      parser.add_argument("--gamma", type=float, default = 0.1)
      parser.add_argument("--ratio", type=float, default = 0.2)                              #【】
      parser.add_argument("--label_pc", type=int, default=3)                                 #【】labeled data number per class
+     parser.add_argument("--l_l_weight", type=float, default=0.5)
      args = parser.parse_args()
      return args
 
