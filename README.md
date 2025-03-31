@@ -15,7 +15,7 @@ and install torch-geometric, faiss
 2. put files into `xxx/FSGL-APL/data`
 3. Set the corresponding path in `config.yaml`
 ## How to use this repo and run the code
-Run the code `python src/main.py`
+Run the code `python src/test111.py`
 
 Detailed examples:
 
